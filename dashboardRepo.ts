@@ -1,6 +1,6 @@
 import { db } from './database'
-import { sumPaise } from '../lib/money'
-import { DAY, startOfDay } from '../lib/dates'
+import { sumPaise } from './money'
+import { DAY, startOfDay } from './dates'
 import type { Sale } from './schema'
 
 export interface DashboardStats {

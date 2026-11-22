@@ -1,5 +1,5 @@
 import { db, getMode, uid } from './database'
-import { rupeesToPaise as rp } from '../lib/money'
+import { rupeesToPaise as rp } from './money'
 /** Only callable in demo mode (separate database). */
 export async function seedDemoData() {
   if (getMode() !== 'demo') throw new Error('Demo data can only be loaded in demo mode')

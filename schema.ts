@@ -1,4 +1,4 @@
-import type { Paise } from '../lib/money'
+import type { Paise } from './money'
 /** Every row carries sync metadata so cloud sync can be added later without migrations. */
 export interface SyncMeta { id?: number; uid: string; createdAt: number; updatedAt: number; deletedAt?: number | null; dirty?: 0 | 1 }
 export interface Product extends SyncMeta { name: string; category: string; barcode?: string; sku?: string; costPaise: Paise; pricePaise: Paise; gstRate: number; stock: number; minStock: number; imageBlob?: Blob; expiryDate?: number; fastSelling: boolean; onHomepage: boolean }
