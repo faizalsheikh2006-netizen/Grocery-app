@@ -47,21 +47,38 @@ export function exportCSV(ps: Product[]): string {
   const rows = ps.map(p => [csvCell(p.name, true), csvCell(p.category, true), csvCell(p.barcode ?? '', true), csvCell(p.sku ?? '', true), p.costPaise / 100, p.pricePaise / 100, p.gstRate, p.stock, p.minStock, iso(p.expiryDate), p.fastSelling ? 'yes' : 'no', p.onHomepage ? 'yes' : 'no'].join(','))
   return [COLS.join(','), ...rows].join('\n')
 }
+/** Adds many products in ONE transaction (fast, and the screen refreshes once). Invalid rows are skipped and reported. */
+export async function bulkCreate(inputs: ProductInput[]): Promise<{ added: number; errors: string[] }> {
+  const errors: string[] = [], now = Date.now(), existing = await listProducts()
+  const barcodes = new Set(existing.map(p => p.barcode).filter(Boolean)), skus = new Set(existing.map(p => p.sku).filter(Boolean))
+  const rows: Product[] = []
+  inputs.forEach((raw, n) => {
+    const c = { ...raw, name: raw.name.trim(), category: raw.category.trim(), barcode: raw.barcode?.trim() || undefined, sku: raw.sku?.trim() || undefined }
+    let msg = validate(c)
+    if (!msg && c.barcode && barcodes.has(c.barcode)) msg = `Barcode "${c.barcode}" pehle se use ho raha hai`
+    if (!msg && c.sku && skus.has(c.sku)) msg = `SKU "${c.sku}" pehle se use ho raha hai`
+    if (msg) { errors.push(`${c.name || 'Row ' + (n + 1)}: ${msg}`); return }
+    if (c.barcode) barcodes.add(c.barcode); if (c.sku) skus.add(c.sku)
+    rows.push({ ...c, uid: uid(), createdAt: now, updatedAt: now, dirty: 1 })
+  })
+  if (rows.length) await db.transaction('rw', db.products, db.audit, async () => { await db.products.bulkAdd(rows); await db.audit.add({ at: now, action: 'bulk_create', entity: 'product', detail: `${rows.length} products` }) })
+  return { added: rows.length, errors }
+}
 export async function importCSV(text: string): Promise<{ added: number; errors: string[] }> {
-  const [head, ...rows] = parseCSV(text); const errors: string[] = []; let added = 0
-  if (!head) return { added, errors: ['File is empty'] }
+  const [head, ...rows] = parseCSV(text); const errors: string[] = []; const inputs: ProductInput[] = []
+  if (!head) return { added: 0, errors: ['File is empty'] }
   const idx = (c: string) => head.map(h => h.trim().toLowerCase()).indexOf(c)
-  if (idx('name') < 0 || idx('selling_price') < 0) return { added, errors: ['Header must include at least: name, selling_price'] }
+  if (idx('name') < 0 || idx('selling_price') < 0) return { added: 0, errors: ['Header must include at least: name, selling_price'] }
   const get = (r: string[], c: string) => (idx(c) >= 0 ? (r[idx(c)] ?? '').trim() : '')
   for (const [n, r] of rows.entries()) {
     try {
       const num = (c: string, d = 0) => { const s = get(r, c); if (s === '') return d; const v = Number(s); if (!Number.isFinite(v)) throw new Error(`${c} is not a number`); return v }
-      const exp = get(r, 'expiry_date'); const expiryDate = exp ? new Date(exp + 'T00:00:00').getTime() : undefined
-      await saveProduct({ name: get(r, 'name'), category: get(r, 'category') || 'General', barcode: get(r, 'barcode') || undefined, sku: get(r, 'sku') || undefined,
+      const exp = get(r, 'expiry_date')
+      inputs.push({ name: get(r, 'name'), category: get(r, 'category') || 'General', barcode: get(r, 'barcode') || undefined, sku: get(r, 'sku') || undefined,
         costPaise: rupeesToPaise(num('purchase_price')), pricePaise: rupeesToPaise(num('selling_price')), gstRate: num('gst_percent', 0), stock: num('stock'), minStock: num('min_stock'),
-        expiryDate, fastSelling: get(r, 'fast_selling').toLowerCase() === 'yes', onHomepage: get(r, 'on_homepage').toLowerCase() === 'yes' })
-      added++
+        expiryDate: exp ? new Date(exp + 'T00:00:00').getTime() : undefined, fastSelling: get(r, 'fast_selling').toLowerCase() === 'yes', onHomepage: get(r, 'on_homepage').toLowerCase() === 'yes' })
     } catch (e) { errors.push(`Row ${n + 2}: ${(e as Error).message}`) }
   }
-  return { added, errors }
+  const r = await bulkCreate(inputs)
+  return { added: r.added, errors: [...errors, ...r.errors] }
 }

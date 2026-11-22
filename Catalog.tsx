@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Search, Check } from 'lucide-react'
 import { CATALOG, CATEGORIES, itemKey, type CatalogItem } from './catalogData'
-import { listProducts, saveProduct } from './productRepo'
+import { listProducts, bulkCreate, type ProductInput } from './productRepo'
 import { rupeesToPaise } from './money'
 
 type Sel = Record<string, { price: string; cost: string; stock: string }>
@@ -20,18 +20,17 @@ export default function Catalog() {
   const patch = (k: string, f: 'price' | 'cost' | 'stock', v: string) => setSel(s => ({ ...s, [k]: { ...s[k], [f]: v } }))
 
   async function addAll() {
-    setBusy(true); const errs: string[] = []; let ok = 0; const left: Sel = {}
+    setBusy(true); const errs: string[] = [], left: Sel = {}, inputs: ProductInput[] = []
     for (const k of keys) {
       const item = CATALOG.find(i => itemKey(i) === k)!, v = sel[k]
-      try {
-        const price = Number(v.price), cost = v.cost === '' ? 0 : Number(v.cost), stock = v.stock === '' ? 0 : Number(v.stock)
-        if (v.price.trim() === '' || !Number.isFinite(price) || price <= 0) throw new Error('selling price daalo')
-        if (!Number.isFinite(cost) || cost < 0) throw new Error('kharid rate galat hai')
-        await saveProduct({ name: k, category: item.category, costPaise: rupeesToPaise(cost), pricePaise: rupeesToPaise(price), gstRate: item.gst, stock, minStock: 0, fastSelling: false, onHomepage: false, icon: item.icon })
-        ok++
-      } catch (e) { errs.push(`${k}: ${(e as Error).message}`); left[k] = v }
+      const price = Number(v.price), cost = v.cost === '' ? 0 : Number(v.cost), stock = v.stock === '' ? 0 : Number(v.stock)
+      const bad = v.price.trim() === '' || !Number.isFinite(price) || price <= 0 ? 'selling price daalo' : !Number.isFinite(cost) || cost < 0 ? 'kharid rate galat hai' : !Number.isFinite(stock) || stock < 0 ? 'stock galat hai' : ''
+      if (bad) { errs.push(`${k}: ${bad}`); left[k] = v; continue }
+      inputs.push({ name: k, category: item.category, costPaise: rupeesToPaise(cost), pricePaise: rupeesToPaise(price), gstRate: item.gst, stock, minStock: 0, fastSelling: false, onHomepage: false, icon: item.icon })
     }
-    setSel(left); setMsg([`${ok} saman aapki dukaan me add ho gaya.`, ...errs.slice(0, 6)]); setBusy(false)
+    try { const r = await bulkCreate(inputs); errs.push(...r.errors); setMsg([`${r.added} saman aapki dukaan me add ho gaya.`, ...errs.slice(0, 6)]) }
+    catch (e) { setMsg([(e as Error).message]); inputs.forEach(i => { left[i.name] = sel[i.name] }) }
+    setSel(left); setBusy(false)
   }
   return (<div className="space-y-3 pb-24">
     <p className="text-sm text-slate-600">Jo saman aapke paas hai uspe tap karo, apna rate aur stock likho, phir neeche <b>Add</b> dabao.</p>
