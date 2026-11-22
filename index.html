@@ -1,3 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="theme-color" content="#0f1b33"/><link rel="icon" href="/icon.svg"/><title>GroceryOS</title></head>
-<body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<body><script>
+function showErr(m){var r=document.getElementById('root');if(r&&!r.children.length)r.innerHTML='<pre style="white-space:pre-wrap;padding:16px;color:#b91c1c;font:14px sans-serif">GroceryOS error:\n'+m+'</pre>'}
+window.addEventListener('error',function(e){showErr(e.message+' '+(e.filename||''))});
+window.addEventListener('unhandledrejection',function(e){showErr(String(e.reason))});
+</script><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
