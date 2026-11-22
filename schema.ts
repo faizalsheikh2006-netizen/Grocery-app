@@ -6,7 +6,7 @@ export interface Customer extends SyncMeta { name: string; phone?: string; addre
 export interface LedgerEntry extends SyncMeta { customerId: number; kind: 'credit_sale' | 'payment' | 'adjustment' | 'return'; amountPaise: Paise; saleId?: number; note?: string; at: number }
 export interface SaleItem { productId: number; name: string; qty: number; unitPricePaise: Paise; costPaise: Paise; discountPaise: Paise; gstRate: number }
 export interface Payment { mode: 'cash' | 'upi' | 'card' | 'other' | 'udhar'; amountPaise: Paise; ref?: string }
-export interface Sale extends SyncMeta { invoiceNo: string; items: SaleItem[]; subtotalPaise: Paise; discountPaise: Paise; gstPaise: Paise; totalPaise: Paise; profitPaise: Paise; payments: Payment[]; customerId?: number; status: 'completed' | 'cancelled' | 'returned'; staffId?: number; at: number }
+export interface Sale extends SyncMeta { invoiceNo: string; items: SaleItem[]; subtotalPaise: Paise; discountPaise: Paise; gstPaise: Paise; totalPaise: Paise; profitPaise: Paise; payments: Payment[]; customerId?: number; customerName?: string; customerPhone?: string; status: 'completed' | 'cancelled' | 'returned'; staffId?: number; at: number }
 export interface Supplier extends SyncMeta { name: string; phone?: string; balancePaise: Paise }
 export interface Purchase extends SyncMeta { supplierId?: number; items: { productId: number; qty: number; costPaise: Paise }[]; totalPaise: Paise; paidPaise: Paise; at: number }
 export interface Expense extends SyncMeta { category: string; amountPaise: Paise; note?: string; at: number }
