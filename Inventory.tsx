@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useLive } from './useLive'
 import { Plus, Search, Star, Home, Pencil, Trash2, Download, Upload } from 'lucide-react'
 import { listProducts, deleteProduct, toggleFlag, exportCSV, importCSV } from './productRepo'
 import type { Product } from './schema'
@@ -13,7 +13,7 @@ type Filter = 'all' | 'low' | 'expiring' | 'fast' | 'home'
 const FILTERS: [Filter, string][] = [['all', 'All'], ['low', 'Low stock'], ['expiring', 'Expiring'], ['fast', 'Fast selling'], ['home', 'Homepage']]
 
 export default function Inventory() {
-  const products = useLiveQuery(listProducts, [])
+  const { data: products, error: loadErr } = useLive(listProducts)
   const [q, setQ] = useState(''); const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
   const [msg, setMsg] = useState<string[]>([]); const fileRef = useRef<HTMLInputElement>(null)
@@ -47,7 +47,7 @@ export default function Inventory() {
     <div className="flex gap-2 overflow-x-auto">{FILTERS.map(([k, l]) => <button key={k} onClick={() => setFilter(k)} className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs ${filter === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 bg-white'}`}>{l}</button>)}</div>
     {msg.length > 0 && <div className="rounded-md border border-slate-200 bg-white p-3 text-sm" role="status">{msg.map((m, i) => <p key={i}>{m}</p>)}<button className="mt-1 text-xs text-slate-500 underline" onClick={() => setMsg([])}>Dismiss</button></div>}
     <div className="rounded-lg border border-slate-200 bg-white">
-      {!products ? <p className="p-4 text-sm text-slate-500">Loading…</p> : products.length === 0 ? <EmptyState title="No products yet" hint="Tap Add, or Import a CSV (columns: name, category, barcode, sku, purchase_price, selling_price, gst_percent, stock, min_stock, expiry_date)." />
+      {loadErr ? <p className="p-4 text-sm text-red-600" role="alert">Data load nahi hua: {loadErr}</p> : !products ? <p className="p-4 text-sm text-slate-500">Loading…</p> : products.length === 0 ? <EmptyState title="No products yet" hint="Tap Add, or Import a CSV (columns: name, category, barcode, sku, purchase_price, selling_price, gst_percent, stock, min_stock, expiry_date)." />
         : list.length === 0 ? <EmptyState title="No matching products" hint="Try a different search or filter." /> :
         <ul className="divide-y divide-slate-100">{list.map(p => { const low = p.stock <= p.minStock, expired = !!p.expiryDate && p.expiryDate < now, soon = !!p.expiryDate && p.expiryDate < now + 30 * DAY
           return (<li key={p.id} className="flex items-center gap-3 p-3">

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useLive } from './useLive'
 import { Search, Check } from 'lucide-react'
 import { CATALOG, CATEGORIES, itemKey, type CatalogItem } from './catalogData'
 import { listProducts, bulkCreate, type ProductInput } from './productRepo'
@@ -9,7 +9,7 @@ type Sel = Record<string, { price: string; cost: string; stock: string }>
 const mini = 'w-full rounded border border-slate-300 px-2 py-1.5 text-sm'
 
 export default function Catalog() {
-  const products = useLiveQuery(listProducts, [])
+  const { data: products } = useLive(listProducts)
   const [q, setQ] = useState(''); const [cat, setCat] = useState('All'); const [sel, setSel] = useState<Sel>({})
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string[]>([])
   const have = new Set((products ?? []).map(p => p.name.toLowerCase()))

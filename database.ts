@@ -25,6 +25,7 @@ class GroceryDB extends Dexie {
   }
 }
 export const db = new GroceryDB(getMode() === 'demo' ? 'groceryos-demo' : 'groceryos')
+db.on('versionchange', () => { db.close(); location.reload(); return false })
 export const uid = () => crypto.randomUUID()
 /** Ask the browser not to evict our data. */
 export const requestPersistence = async () => (navigator.storage?.persist ? navigator.storage.persist() : false)

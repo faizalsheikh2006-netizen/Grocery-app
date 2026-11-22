@@ -15,10 +15,10 @@ export async function createSale(i: Input): Promise<Sale> {
     const sale: Sale = { ...bill, uid: uid(), invoiceNo, payments: [{ mode: i.mode, amountPaise: bill.totalPaise }], customerName: i.customerName?.trim() || undefined,
       customerPhone: i.customerPhone?.trim() || undefined, status: 'completed', at: now, createdAt: now, updatedAt: now, dirty: 1 }
     sale.id = await db.sales.add(sale)
-    for (const l of i.lines) {
-      const p = await db.products.get(l.productId); if (!p) throw new Error(`${l.name} ab inventory me nahi hai`)
-      await db.products.update(p.id!, { stock: Math.round((p.stock - l.qty) * 1000) / 1000, updatedAt: now, dirty: 1 })
-    }
+    const ps = await db.products.bulkGet(i.lines.map(l => l.productId))
+    const changes = ps.map((p, n) => { if (!p) throw new Error(`${i.lines[n].name} ab inventory me nahi hai`)
+      return { key: p.id!, changes: { stock: Math.round((p.stock - i.lines[n].qty) * 1000) / 1000, updatedAt: now, dirty: 1 as const } } })
+    await db.products.bulkUpdate(changes)
     await db.audit.add({ at: now, action: 'create', entity: 'sale', entityId: sale.id, detail: invoiceNo })
     return sale
   })

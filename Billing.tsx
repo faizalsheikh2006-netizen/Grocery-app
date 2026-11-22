@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useLive } from './useLive'
 import { Search, Plus, Minus, X, ShoppingCart, Download, MessageCircle } from 'lucide-react'
 import { listProducts } from './productRepo'
 import type { Product, Sale, Payment } from './schema'
@@ -15,7 +15,7 @@ const MODES: Payment['mode'][] = ['cash', 'upi', 'card', 'other']
 const inp = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
 
 export default function Billing() {
-  const products = useLiveQuery(listProducts, [])
+  const { data: products, error: loadErr } = useLive(listProducts)
   const [q, setQ] = useState(''); const [cart, setCart] = useState<Cart>({}); const [open, setOpen] = useState(false)
   const [discount, setDiscount] = useState(''); const [mode, setMode] = useState<Payment['mode']>('cash')
   const [cName, setCName] = useState(''); const [cPhone, setCPhone] = useState('')
@@ -41,7 +41,7 @@ export default function Billing() {
 
   async function save() {
     if (!bill) return; setBusy(true); setError('')
-    try { const s = await createSale({ lines, discountPaise: bill.discountPaise, mode, customerName: cName, customerPhone: cPhone }); setDone(s); setCart({}); setDiscount('') }
+    try { const s = await Promise.race([createSale({ lines, discountPaise: bill.discountPaise, mode, customerName: cName, customerPhone: cPhone }), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('Bill save nahi hua: database jawab nahi de raha. App ke saare tab band karke dobara kholo.')), 10000))]); setDone(s); setCart({}); setDiscount('') }
     catch (e) { setError((e as Error).message) } finally { setBusy(false) }
   }
   const act = (fn: () => Promise<unknown>) => async () => { try { await fn() } catch (e) { if ((e as Error).name !== 'AbortError') setError((e as Error).message) } }
@@ -52,7 +52,7 @@ export default function Billing() {
       <input value={q} onChange={e => setQ(e.target.value)} placeholder="Saman ka naam ya barcode" className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm"
         onKeyDown={e => { if (e.key === 'Enter') { const m = (products ?? []).find(p => p.barcode && p.barcode === q.trim()); if (m) { add(m); setQ('') } } }} /></div>
     <div className="rounded-lg border border-slate-200 bg-white">
-      {!products ? <p className="p-4 text-sm text-slate-500">Loading…</p> : products.length === 0 ? <EmptyState title="Abhi koi saman nahi hai" hint="Pehle Inventory me saman add karo ya CSV import karo." />
+      {loadErr ? <p className="p-4 text-sm text-red-600" role="alert">Data load nahi hua: {loadErr}</p> : !products ? <p className="p-4 text-sm text-slate-500">Loading…</p> : products.length === 0 ? <EmptyState title="Abhi koi saman nahi hai" hint="Pehle Inventory me saman add karo ya CSV import karo." />
         : list.length === 0 ? <EmptyState title="Kuch nahi mila" hint="Dusra naam ya barcode try karo." /> :
         <ul className="divide-y divide-slate-100">{list.map(p => { const n = cart[p.id!]?.qty
           return (<li key={p.id}><button onClick={() => add(p)} className="flex w-full items-center gap-3 p-3 text-left hover:bg-slate-50">

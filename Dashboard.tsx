@@ -1,4 +1,4 @@
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useLive } from './useLive'
 import { IndianRupee, Truck, TrendingUp, BookUser, Users, Package, AlertTriangle } from 'lucide-react'
 import { getDashboardStats } from './dashboardRepo'
 import { getMode } from './database'
@@ -13,7 +13,8 @@ const Panel = ({ title, children }: { title: string; children: React.ReactNode }
   <section className="rounded-lg border border-slate-200 bg-white"><h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">{title}</h2><div className="p-4">{children}</div></section>)
 
 export default function Dashboard() {
-  const s = useLiveQuery(getDashboardStats, [])
+  const { data: s, error } = useLive(getDashboardStats)
+  if (error) return <p className="text-sm text-red-600" role="alert">Data load nahi hua: {error}</p>
   if (!s) return <p className="text-sm text-slate-500">Loading…</p>
   return (<div className="space-y-4">
     {getMode() === 'demo' && s.products === 0 && <button className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white" onClick={() => void seedDemoData()}>Load demo data</button>}
