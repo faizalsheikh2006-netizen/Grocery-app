@@ -51,7 +51,7 @@ export default function Inventory() {
         : list.length === 0 ? <EmptyState title="No matching products" hint="Try a different search or filter." /> :
         <ul className="divide-y divide-slate-100">{list.map(p => { const low = p.stock <= p.minStock, expired = !!p.expiryDate && p.expiryDate < now, soon = !!p.expiryDate && p.expiryDate < now + 30 * DAY
           return (<li key={p.id} className="flex items-center gap-3 p-3">
-            <ProductThumb blob={p.imageBlob} name={p.name} />
+            <ProductThumb blob={p.imageBlob} name={p.name} icon={p.icon} />
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{p.name}</p>
               <p className="truncate text-xs text-slate-500">{p.category}{p.barcode ? ` · ${p.barcode}` : ''}</p>
               <p className="text-xs"><span className="font-medium text-money">{formatINR(p.pricePaise)}</span> <span className="text-slate-400">cost {formatINR(p.costPaise)}</span>{' · '}

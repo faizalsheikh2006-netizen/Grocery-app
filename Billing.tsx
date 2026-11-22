@@ -56,7 +56,7 @@ export default function Billing() {
         : list.length === 0 ? <EmptyState title="Kuch nahi mila" hint="Dusra naam ya barcode try karo." /> :
         <ul className="divide-y divide-slate-100">{list.map(p => { const n = cart[p.id!]?.qty
           return (<li key={p.id}><button onClick={() => add(p)} className="flex w-full items-center gap-3 p-3 text-left hover:bg-slate-50">
-            <ProductThumb blob={p.imageBlob} name={p.name} />
+            <ProductThumb blob={p.imageBlob} name={p.name} icon={p.icon} />
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{p.name}</p><p className="text-xs text-slate-500">{p.stock} stock</p></div>
             <span className="text-sm font-semibold text-money">{formatINR(p.pricePaise)}</span>
             {n ? <span className="rounded-full bg-navy-900 px-2 py-0.5 text-xs text-white">{n}</span> : <Plus size={18} className="text-slate-400" />}</button></li>) })}</ul>}

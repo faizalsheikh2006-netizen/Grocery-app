@@ -5,6 +5,7 @@ import Dashboard from './Dashboard'
 import ComingSoon from './ComingSoon'
 import Inventory from './Inventory'
 import Billing from './Billing'
+import Catalog from './Catalog'
 import { NAV } from './nav'
 import { requestPersistence } from './database'
 export default function App() {
@@ -12,5 +13,6 @@ export default function App() {
   return (<Routes><Route element={<AppLayout />}><Route index element={<Dashboard />} />
     <Route path="/inventory" element={<Inventory />} />
     <Route path="/billing" element={<Billing />} />
-    {NAV.filter(n => n.to !== '/' && n.to !== '/inventory' && n.to !== '/billing').map(n => <Route key={n.to} path={n.to} element={<ComingSoon />} />)}</Route></Routes>)
+    <Route path="/catalog" element={<Catalog />} />
+    {NAV.filter(n => n.to !== '/' && n.to !== '/inventory' && n.to !== '/billing' && n.to !== '/catalog').map(n => <Route key={n.to} path={n.to} element={<ComingSoon />} />)}</Route></Routes>)
 }

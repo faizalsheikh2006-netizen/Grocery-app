@@ -1,7 +1,7 @@
 import type { Paise } from './money'
 /** Every row carries sync metadata so cloud sync can be added later without migrations. */
 export interface SyncMeta { id?: number; uid: string; createdAt: number; updatedAt: number; deletedAt?: number | null; dirty?: 0 | 1 }
-export interface Product extends SyncMeta { name: string; category: string; barcode?: string; sku?: string; costPaise: Paise; pricePaise: Paise; gstRate: number; stock: number; minStock: number; imageBlob?: Blob; expiryDate?: number; fastSelling: boolean; onHomepage: boolean }
+export interface Product extends SyncMeta { name: string; category: string; barcode?: string; sku?: string; costPaise: Paise; pricePaise: Paise; gstRate: number; stock: number; minStock: number; imageBlob?: Blob; expiryDate?: number; fastSelling: boolean; onHomepage: boolean; icon?: string }
 export interface Customer extends SyncMeta { name: string; phone?: string; address?: string; creditLimitPaise?: Paise; balancePaise: Paise }
 export interface LedgerEntry extends SyncMeta { customerId: number; kind: 'credit_sale' | 'payment' | 'adjustment' | 'return'; amountPaise: Paise; saleId?: number; note?: string; at: number }
 export interface SaleItem { productId: number; name: string; qty: number; unitPricePaise: Paise; costPaise: Paise; discountPaise: Paise; gstRate: number }
